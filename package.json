@@ -1,7 +1,7 @@
 {
-  "name": "browser-beam",
+  "name": "pg-database-driver",
   "version": "1.2.0",
-  "description": "Lightweight wrapper around fetch API, with better error handling and more powerful config options.",
+  "description": "Simple CRUD query builders for postgres",
   "main": "src/index.js",
   "scripts": {
     "build": "tsc -p . && cp package.json dist && cp README.md dist",
