@@ -49,8 +49,32 @@ class DatabaseDriver {
 
 	beforeDelete: (tableName: string, handlers: Function | Function[]) => any
 	afterDelete: (tableName: string, handlers: Function | Function[]) => any
-	_validateHandlers: (handlers: Function | Function[]) => Function[]
-	_interateMiddlewareFunctions: (...args: any) => (handlers?: Function[]) => any
+	_validateHandlers: (handlers: Function | Function[]) => Function[] = (handlers) => {
+		const handlersToAdd: Function[] = []
+		if (typeof handlers == 'function') {
+			handlersToAdd.push(handlers)
+		} else if (Array.isArray(handlers)) {
+			handlers.map((handler: Function) => {
+				if (typeof handler != 'function') {
+					throw 'Handler must be a function'
+				}
+				handlersToAdd.push(handler)
+			})
+
+		}
+		return handlersToAdd
+	}
+	_interateMiddlewareFunctions: (...args: any) => (handlers?: Function[]) => any = (...args) => async (handlers) => {
+		const interate = async (index: number) => {
+			if (!handlers?.[index]) {
+				return
+			}
+			await handlers[index](...args)
+			console.log(index)
+			await interate(index + 1)
+		}
+		return interate(0)
+	}
 	constructor(postgres: Client | Pool) {
 		this.postgres = postgres
 		this._insert = buildInsert(postgres)
@@ -180,34 +204,6 @@ class DatabaseDriver {
 				this._middlewareFunctions.afterDelete[tableName] = []
 			}
 			this._middlewareFunctions.afterDelete[tableName].push(...handlersToAdd)
-		}
-
-		this._interateMiddlewareFunctions = (...args) => async (handlers) => {
-			const interate = async (index: number) => {
-				if (!handlers?.[index]) {
-					return
-				}
-				await handlers[index](...args)
-				console.log(index)
-				await interate(index + 1)
-			}
-			return interate(0)
-		}
-
-		this._validateHandlers = (handlers) => {
-			const handlersToAdd: Function[] = []
-			if (typeof handlers == 'function') {
-				handlersToAdd.push(handlers)
-			} else if (Array.isArray(handlers)) {
-				handlers.map((handler: Function) => {
-					if (typeof handler != 'function') {
-						throw 'Handler must be a function'
-					}
-					handlersToAdd.push(handler)
-				})
-
-			}
-			return handlersToAdd
 		}
 	}
 }
