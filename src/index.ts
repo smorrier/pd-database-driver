@@ -18,6 +18,13 @@ interface tableNameColumnAndHandlerMiddleWare {
 	},
 }
 
+interface middlewareEvent {
+	table: string,
+	params: any,
+	result?: any,
+	stop?: Function
+}
+
 class DatabaseDriver {
 	postgres: any
 	query: (qs: String) => any
@@ -64,13 +71,12 @@ class DatabaseDriver {
 		}
 		return handlersToAdd
 	}
-	_interateMiddlewareFunctions: (...args: any) => (handlers?: Function[]) => any = (...args) => async (handlers) => {
+	_interateMiddlewareFunctions: (event: middlewareEvent) => (handlers?: Function[]) => any = (event) => async (handlers) => {
 		const interate = async (index: number) => {
 			if (!handlers?.[index]) {
 				return
 			}
-			await handlers[index](...args)
-			console.log(index)
+			await handlers[index](event)
 			await interate(index + 1)
 		}
 		return interate(0)
@@ -78,16 +84,26 @@ class DatabaseDriver {
 	constructor(postgres: Client | Pool) {
 		this.postgres = postgres
 		this._insert = buildInsert(postgres)
-		this.insert = async (table, rows) => {
-			await this._interateMiddlewareFunctions(table, rows)(this._middlewareFunctions.beforeInsert[table])
-			const res = await this._insert(table, rows)
-			await this._interateMiddlewareFunctions(res)(this._middlewareFunctions.afterInsert[table])
+		this.insert = async (table, params) => {
+			const event: middlewareEvent = {
+				table,
+				params,
+				result: null,
+				stop: (reason: any) => {
+					throw reason
+				}
+			}
+			await this._interateMiddlewareFunctions(event)(this._middlewareFunctions.beforeInsert[table])
+			const res = await this._insert(event.table, event.params)
+			delete event.stop
+			event.result = res
+			await this._interateMiddlewareFunctions(event)(this._middlewareFunctions.afterInsert[table])
 		}
 		this._update = buildUpdate(postgres)
-		this.update = async (table, { updates, where, values }) => {
+		this.update = async (table, params) => {
 			const beforeUpdateHandlers: idHandler[] = []
 			const afterUpdateHandlers: idHandler[] = []
-			Object.keys(updates).map(column => {
+			Object.keys(params.updates).map(column => {
 				const beforeHandlers = this._middlewareFunctions.beforeUpdate[table]?.[column]
 				if (beforeHandlers) {
 					beforeUpdateHandlers.push(...beforeHandlers)
@@ -111,15 +127,35 @@ class DatabaseDriver {
 			}
 			const uniqueBeforeUpdateHandlers: Function[] = filterDuplicates(beforeUpdateHandlers)
 			const uniqueAfterUpdateHandlers: Function[] = filterDuplicates(afterUpdateHandlers)
-			await this._interateMiddlewareFunctions(table, { updates, where, values })(uniqueBeforeUpdateHandlers)
-			const res = await this._update(table, { updates, where, values })
-			await this._interateMiddlewareFunctions(res)(uniqueAfterUpdateHandlers)
+			const event: middlewareEvent = {
+				table,
+				params,
+				result: null,
+				stop: (reason: any) => {
+					throw reason
+				}
+			}
+			await this._interateMiddlewareFunctions(event)(uniqueBeforeUpdateHandlers)
+			const res = await this._update(event.table, event.params)
+			delete event.stop
+			event.result = res
+			await this._interateMiddlewareFunctions(event)(uniqueAfterUpdateHandlers)
 		}
 		this._del = buildDel(postgres)
-		this.del = async (table, whereAndValues) => {
-			await this._interateMiddlewareFunctions(table, whereAndValues)(this._middlewareFunctions.beforeDelete[table])
-			const res = await this._del(table, whereAndValues)
-			await this._interateMiddlewareFunctions(res)(this._middlewareFunctions.afterDelete[table])
+		this.del = async (table, params) => {
+			const event: middlewareEvent = {
+				table,
+				params,
+				result: null,
+				stop: (reason: any) => {
+					throw reason
+				}
+			}
+			await this._interateMiddlewareFunctions(event)(this._middlewareFunctions.beforeDelete[table])
+			const res = await this._del(event.table, event.params)
+			delete event.stop
+			event.result = res
+			await this._interateMiddlewareFunctions(event)(this._middlewareFunctions.afterDelete[table])
 		}
 		this.query = this.postgres.query
 
