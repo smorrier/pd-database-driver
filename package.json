@@ -1,10 +1,10 @@
 {
   "name": "pg-database-driver",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Simple CRUD query builders for postgres",
   "main": "src/index.js",
   "scripts": {
-    "build": "tsc -p . && cp package.json dist && cp README.md dist",
+    "build": "rm -r dist && tsc -p . && cp package.json dist && cp README.md dist",
     "deploy": "yarn version && npm run build && cd dist && npm publish"
   },
   "author": "",
