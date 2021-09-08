@@ -14,10 +14,10 @@ postgres.connect()
 const databaseDriver = new DatabaseDriver(postgres)
 // Insert Tests
 
-databaseDriver.beforeInsert('test', (...args: any) => {
+databaseDriver.beforeInsert('test', [(...args: any) => {
     console.log('insert1', ...args)
-})
-databaseDriver.beforeInsert('test', [
+}])
+databaseDriver.beforeInsert('test', ['test1'], [
     (...args: any) => {
         console.log('insert2', ...args)
     },
@@ -25,10 +25,10 @@ databaseDriver.beforeInsert('test', [
         console.log('insert3', ...args)
     }
 ])
-databaseDriver.afterInsert('test', () => {
+databaseDriver.afterInsert('test', ['test1'], [() => {
     console.log('insert4')
-})
-databaseDriver.afterInsert('test', [
+}])
+databaseDriver.afterInsert('test', ['test1'], [
     (...args: any) => {
         console.log('insert5', ...args)
     },
@@ -64,10 +64,10 @@ databaseDriver.afterDelete('test', [
 
 // Update Tests
 
-databaseDriver.beforeUpdate('test', ['test1', 'test2'], (...args: any) => {
+databaseDriver.beforeUpdate('test', ['test1', 'test2'], [(...args: any) => {
     console.log('update1')
-})
-databaseDriver.beforeUpdate('test', ['test1'], [
+}])
+databaseDriver.beforeUpdate('test', [
     (...args: any) => {
         console.log('update2')
     },
@@ -75,9 +75,9 @@ databaseDriver.beforeUpdate('test', ['test1'], [
         console.log('update3')
     }
 ])
-databaseDriver.afterUpdate('test', ['test1'], () => {
+databaseDriver.afterUpdate('test', ['test1'], [() => {
     console.log('update4')
-})
+}])
 databaseDriver.afterUpdate('test', ['test1', 'test2'], [
     (...args: any) => {
         console.log('update5')
