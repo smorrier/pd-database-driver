@@ -191,6 +191,7 @@ class DatabaseDriver {
 			delete event.stop
 			event.result = res
 			await this._interateMiddlewareFunctions(event)(afterInsertHandlers)
+			return res
 		}
 		this._update = buildUpdate(postgres)
 		this.update = async (table, params) => {
@@ -209,6 +210,7 @@ class DatabaseDriver {
 			delete event.stop
 			event.result = res
 			await this._interateMiddlewareFunctions(event)(afterUpdateHandlers)
+			return res
 		}
 		this._del = buildDel(postgres)
 		this.del = async (table, params) => {
@@ -225,6 +227,7 @@ class DatabaseDriver {
 			delete event.stop
 			event.result = res
 			await this._interateMiddlewareFunctions(event)(this._middlewareFunctions.afterDelete[table])
+			return res
 		}
 		this.query = this.postgres.query
 
