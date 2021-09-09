@@ -169,6 +169,7 @@ class DatabaseDriver {
 		this.postgres = postgres
 		this._insert = buildInsert(postgres)
 		this.insert = async (table, params) => {
+			params = Array.isArray(params) ? params : [params]
 			const uniqueKeyMap: any = {}
 			params.map((element: any) => {
 				Object.keys(element).map((key: string) => {
