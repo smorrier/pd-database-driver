@@ -94,9 +94,9 @@ class DatabaseDriver {
 		})
 
 	}
-	_interateMiddlewareFunctions: (event: middlewareEvent) => (handlers?: Function[]) => any = (event) => async (handlers) => {
+	_interateMiddlewareFunctions: (event: middlewareEvent) => (handlers: Function[]) => any = (event) => async (handlers = []) => {
 		const interate = async (index: number) => {
-			if (!handlers?.[index]) {
+			if (!handlers[index]) {
 				return
 			}
 			await handlers[index](event)
@@ -132,7 +132,7 @@ class DatabaseDriver {
 			columns = [columns]
 		}
 		columns.map(column => {
-			if (!this._middlewareFunctions[key][tableName].columns?.[column]) {
+			if (!this._middlewareFunctions[key][tableName].columns[column]) {
 				this._middlewareFunctions[key][tableName].columns[column] = []
 			}
 			this._middlewareFunctions[key][tableName].columns[column].push(...handlersToAdd)
@@ -151,13 +151,13 @@ class DatabaseDriver {
 	_buildHandlers: (key: keyof typeof validFunctions, table: string, columns: string[]) => Function[] = (key, table, columns) => {
 		const eventHandlers: idHandler[] = []
 		columns.map(column => {
-			const columnSpecificBeforeHandlers = this._middlewareFunctions[key][table]?.columns?.[column]
+			const columnSpecificBeforeHandlers = this._middlewareFunctions[key][table] && this._middlewareFunctions[key][table].columns && this._middlewareFunctions[key][table].columns[column]
 			if (columnSpecificBeforeHandlers) {
 				eventHandlers.push(...columnSpecificBeforeHandlers)
 			}
 		})
 		const finalHandlers: Function[] = []
-		const tableHandlers = this._middlewareFunctions[key]?.[table]?.handlers
+		const tableHandlers = this._middlewareFunctions[key][table] && this._middlewareFunctions[key][table].handlers
 		if (tableHandlers) {
 			finalHandlers.push(...tableHandlers)
 		}
