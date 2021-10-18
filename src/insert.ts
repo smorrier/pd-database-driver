@@ -6,7 +6,7 @@ const buildInsert = (postgres:any) => async (table: string, rows: any | any[], d
 		data = [rows]
 	}
 	try {
-		if (disableTransaction) {
+		if (!disableTransaction) {
 			await postgres.query('BEGIN')
 		}
 		const insertedRows = []
@@ -42,12 +42,12 @@ const buildInsert = (postgres:any) => async (table: string, rows: any | any[], d
 		}
 		
 		if (errorRows.length) {
-			if (disableTransaction) {
+			if (!disableTransaction) {
 				await postgres.query('ROLLBACK')
 			}
 			return Promise.reject({ errorRows })
 		} else {
-			if (disableTransaction) {
+			if (!disableTransaction) {
 				await postgres.query('COMMIT')
 			}
 			return { insertedRows }
