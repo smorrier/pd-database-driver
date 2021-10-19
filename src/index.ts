@@ -38,8 +38,8 @@ const validFunctions = {
 class DatabaseDriver {
 	postgres: any
 	query: (qs: String) => any
-	insert: (table: string, rows: any | any[]) => any
-	_insert: (table: string, rows: any | any[]) => any
+	insert: (table: string, rows: any | any[], disableTransaction?: Boolean) => any
+	_insert: (table: string, rows: any | any[], disableTransaction?: Boolean) => any
 	update: (table: string, { updates, where, values }: { updates: any, where: Function, values: any }) => any
 	_update: (table: string, { updates, where, values }: { updates: any, where: Function, values: any }) => any
 	del: (table: string, { where, values }: { where: Function | undefined, values: any }) => any
@@ -168,7 +168,7 @@ class DatabaseDriver {
 	constructor(postgres: Client | Pool) {
 		this.postgres = postgres
 		this._insert = buildInsert(postgres)
-		this.insert = async (table, params) => {
+		this.insert = async (table, params, disableTransaction) => {
 			params = Array.isArray(params) ? params : [params]
 			const uniqueKeyMap: any = {}
 			params.map((element: any) => {
@@ -188,7 +188,7 @@ class DatabaseDriver {
 				}
 			}
 			await this._interateMiddlewareFunctions(event)(beforeInsertHandlers)
-			const res = await this._insert(event.table, event.params)
+			const res = await this._insert(event.table, event.params, disableTransaction)
 			delete event.stop
 			event.result = res
 			await this._interateMiddlewareFunctions(event)(afterInsertHandlers)
